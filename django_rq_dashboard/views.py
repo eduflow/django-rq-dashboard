@@ -5,7 +5,10 @@ from itertools import groupby
 
 from django.contrib import messages
 from django.conf import settings
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except:
+    from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -24,6 +27,7 @@ except ImportError:
     Scheduler = None
 
 from .forms import QueueForm, JobForm
+from .utils import is_authenticated
 
 
 utc = pytz.timezone('UTC')
@@ -78,7 +82,8 @@ def serialize_scheduled_queues(queue):
 
 class SuperUserMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated():
+        #if not request.user.is_authenticated():
+        if not is_authenticated(request.user):
             return redirect('{}?{}'.format(reverse('admin:login'),
                                            urlencode({
                                                'next': reverse('rq_stats')
