@@ -48,7 +48,9 @@
 	<div id="content-main">
     <form method="post" action="{% url "rq_queue" queue.name %}">
 		<div class="module">
-      {% pagination cl %}
+      {% if pagination_required %}
+      {% block pagination %}{% pagination cl %}{% endblock %}
+      {% endif %}
 			<table id="rq">
 				<caption>{% trans "Jobs" %}</caption>
 				<thead>
