@@ -1,5 +1,4 @@
 import pytz
-from itertools import groupby
 
 from django.contrib import messages
 from django.contrib.admin.views.decorators import user_passes_test
@@ -29,7 +28,7 @@ except ImportError:
     Scheduler = None
 
 from .forms import QueueForm, JobForm
-from .utils import is_authenticated
+from .utils import is_authenticated, get_rq_admin_context
 
 
 utc = pytz.timezone('UTC')
@@ -106,9 +105,6 @@ class SuperUserMixin(object):
             return super(SuperUserMixin, self).dispatch(
                 request, *args, **kwargs)
 
-def by_name(obj):
-    return obj.name
-
 
 class Stats(SuperUserMixin, generic.TemplateView):
     template_name = 'rq/stats.html'
@@ -116,22 +112,10 @@ class Stats(SuperUserMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super(Stats, self).get_context_data(**kwargs)
         ctx.update({
-            'queues': sorted(Queue.all(connection=self.connection),
-                             key=by_name),
-            'workers': sorted(Worker.all(connection=self.connection),
-                              key=by_name),
+            **get_rq_admin_context(connection=self.connection),
             'has_permission': True,
             'title': 'RQ Status',
         })
-        if Scheduler:
-            scheduler = Scheduler(self.connection)
-            get_queue = lambda job: job.origin
-            all_jobs = sorted(scheduler.get_jobs(), key=get_queue)
-            ctx['scheduler'] = scheduler
-            ctx['scheduled_queues'] = [
-                {'name': queue, 'job_count': len(list(jobs))}
-                for queue, jobs in groupby(all_jobs, get_queue)]
-        return ctx
 
     def render_to_response(self, context, **response_kwargs):
         if self.request.is_ajax():
