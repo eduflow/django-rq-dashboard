@@ -1,2 +1,5 @@
 dist
 django_rq_dashboard.egg-info
+*.py[cod]
+__pycache__
+*.sw[a-z]
